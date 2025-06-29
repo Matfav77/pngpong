@@ -4,7 +4,7 @@ use std::str;
 
 use crate::Error;
 use crate::chunk_type::ChunkType;
-use crc::Crc;
+use crc::crc32;
 
 pub struct Chunk {
     length: u32,
@@ -57,14 +57,13 @@ impl Chunk {
     }
 
     pub fn calculate_crc(chunk_type: &ChunkType, data: &[u8]) -> u32 {
-        let crc: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_CKSUM);
         let crc_data: Vec<u8> = chunk_type
             .bytes()
             .iter()
             .copied()
             .chain(data.iter().copied())
             .collect();
-        crc.checksum(&crc_data)
+        crc32::checksum_ieee(&crc_data)
     }
 }
 
