@@ -1,19 +1,20 @@
 use std::{fmt::Display, str::FromStr};
+use crate::Error;
 
-#[derive(PartialEq, Debug)]
-pub enum CreationError {
-    InvalidByte,
-    InvalidStrLength,
-}
-
-impl Display for CreationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            Self::InvalidByte => write!(f, "provided byte is not in the correct range"),
-            Self::InvalidStrLength => write!(f, "string needs to be of length 4"),
-        }
-    }
-}
+// #[derive(PartialEq, Debug)]
+// pub enum CreationError {
+//     InvalidByte,
+//     InvalidStrLength,
+// }
+//
+// impl Display for CreationError {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match *self {
+//             Self::InvalidByte => write!(f, "provided byte is not in the correct range"),
+//             Self::InvalidStrLength => write!(f, "string needs to be of length 4"),
+//         }
+//     }
+// }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChunkType {
@@ -59,12 +60,12 @@ impl ChunkType {
 }
 
 impl TryFrom<[u8; 4]> for ChunkType {
-    type Error = CreationError;
+    type Error = Error;
 
-    fn try_from(bytes: [u8; 4]) -> Result<Self, CreationError> {
+    fn try_from(bytes: [u8; 4]) -> Result<Self, Error> {
         for b in bytes {
             if !Self::is_valid_png_byte(b) {
-                return Err(CreationError::InvalidByte);
+                return Err("The byte provided is not in the expected range".into());
             }
         }
         Ok(ChunkType { bytes })
@@ -72,14 +73,14 @@ impl TryFrom<[u8; 4]> for ChunkType {
 }
 
 impl FromStr for ChunkType {
-    type Err = CreationError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = s.as_bytes();
         if bytes.len() == 4 && bytes.is_ascii() {
             return Ok(Self::try_from([bytes[0], bytes[1], bytes[2], bytes[3]])?);
         } else {
-            return Err(CreationError::InvalidStrLength);
+            return Err("Could not create a ChunkType chunk from the string provided".into());
         }
     }
 }
