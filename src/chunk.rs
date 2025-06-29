@@ -1,4 +1,5 @@
-use std::io::Read;
+use std::fmt::Display;
+use std::io::{BufReader, Read};
 use std::str;
 
 use crate::Error;
@@ -14,18 +15,12 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
-        let crc: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_CKSUM);
-        let crc_data: Vec<u8> = chunk_type
-            .bytes()
-            .iter()
-            .copied()
-            .chain(data.iter().copied())
-            .collect();
+        let crc = Self::calculate_crc(&chunk_type, &data);
         Chunk {
             length: data.len() as u32,
             chunk_type: chunk_type,
             data: data,
-            crc: crc.checksum(&crc_data),
+            crc,
         }
     }
 
@@ -59,6 +54,63 @@ impl Chunk {
             .chain(self.data.iter().copied())
             .chain(self.crc.to_be_bytes().iter().copied())
             .collect()
+    }
+
+    pub fn calculate_crc(chunk_type: &ChunkType, data: &[u8]) -> u32 {
+        let crc: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_CKSUM);
+        let crc_data: Vec<u8> = chunk_type
+            .bytes()
+            .iter()
+            .copied()
+            .chain(data.iter().copied())
+            .collect();
+        crc.checksum(&crc_data)
+    }
+}
+
+impl Display for Chunk {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Length: {}\nChunk type: {}\nData: {:#?}\nCRC: {}",
+            self.length, self.chunk_type, self.data, self.crc
+        )
+    }
+}
+
+impl TryFrom<&[u8]> for Chunk {
+    type Error = crate::Error;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if value.len() < 8 {
+            return Err("The array provided does not have enough data".into());
+        }
+        let mut reader = BufReader::new(value);
+        let mut buffer: [u8; 4] = [0, 0, 0, 0];
+
+        reader.read_exact(&mut buffer)?;
+        let data_length = u32::from_be_bytes(buffer);
+
+        reader.read_exact(&mut buffer)?;
+        let chunk_type = ChunkType::try_from(buffer)?;
+
+        let mut data: Vec<u8> = vec![0; data_length as usize];
+        reader.read_exact(&mut data)?;
+
+        reader.read_exact(&mut buffer)?;
+        let crc = u32::from_be_bytes(buffer);
+
+        let computed_crc = Chunk::calculate_crc(&chunk_type, &data);
+        if crc != computed_crc {
+            return Err("The CRC provided is not correct in relation to the other chunks".into());
+        }
+
+        Ok(Self {
+            length: data_length,
+            chunk_type,
+            data,
+            crc,
+        })
     }
 }
 
