@@ -1,4 +1,9 @@
+use std::io::Read;
+use std::str;
+
+use crate::Error;
 use crate::chunk_type::ChunkType;
+use crc::Crc;
 
 pub struct Chunk {
     length: u32,
@@ -7,11 +12,59 @@ pub struct Chunk {
     crc: u32,
 }
 
+impl Chunk {
+    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
+        let crc: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_CKSUM);
+        let crc_data: Vec<u8> = chunk_type
+            .bytes()
+            .iter()
+            .copied()
+            .chain(data.iter().copied())
+            .collect();
+        Chunk {
+            length: data.len() as u32,
+            chunk_type: chunk_type,
+            data: data,
+            crc: crc.checksum(&crc_data),
+        }
+    }
 
-#![allow(unused_variables)]
-fn main() {
+    pub fn length(&self) -> u32 {
+        self.data.len() as u32
+    }
+
+    pub fn chunk_type(&self) -> &ChunkType {
+        &self.chunk_type
+    }
+
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
+
+    pub fn crc(&self) -> u32 {
+        self.crc
+    }
+
+    pub fn data_as_string(&self) -> Result<String, Error> {
+        let parsed = str::from_utf8(&self.data)?;
+        Ok(parsed.to_string())
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.length()
+            .to_be_bytes()
+            .iter()
+            .copied()
+            .chain(self.chunk_type.bytes().iter().copied())
+            .chain(self.data.iter().copied())
+            .chain(self.crc.to_be_bytes().iter().copied())
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #![allow(unused_variables)]
     use super::*;
     use crate::chunk_type::ChunkType;
     use std::str::FromStr;
@@ -30,14 +83,16 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         Chunk::try_from(chunk_data.as_ref()).unwrap()
     }
 
     #[test]
     fn test_new_chunk() {
         let chunk_type = ChunkType::from_str("RuSt").unwrap();
-        let data = "This is where your secret message will be!".as_bytes().to_vec();
+        let data = "This is where your secret message will be!"
+            .as_bytes()
+            .to_vec();
         let chunk = Chunk::new(chunk_type, data);
         assert_eq!(chunk.length(), 42);
         assert_eq!(chunk.crc(), 2882656334);
@@ -132,11 +187,9 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         let chunk: Chunk = TryFrom::try_from(chunk_data.as_ref()).unwrap();
-        
+
         let _chunk_string = format!("{}", chunk);
     }
 }
-}
-
