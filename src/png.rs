@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
 use crate::chunk::Chunk;
+use crate::chunk_type::ChunkType;
+use crate::Error;
 
 
 #[derive(Debug)]
@@ -15,6 +17,24 @@ impl PngFile {
     fn from_chunks (chunks: Vec<Chunk>) -> Self {
         Self { header: Self::STANDARD_HEADER, chunks}
     }
+
+    fn append_chunk(&mut self, chunk: Chunk) {
+        self.chunks.push(chunk);
+    }
+
+    fn remove_first_chunk (&mut self, chunk_type: ChunkType) -> Result<Chunk, Error> {
+        // todo
+    }
+
+    fn header (&self) -> &[u8;8] {
+        &self.header
+    }
+
+    fn chunks (&self) -> &[Chunk] {
+        &self.chunks
+    }
+
+
 }
 
 impl Display for PngFile {
