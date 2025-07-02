@@ -6,6 +6,7 @@ use crate::Error;
 use crate::chunk_type::ChunkType;
 use crc::crc32;
 
+#[derive(Debug)]
 pub struct Chunk {
     length: u32,
     chunk_type: ChunkType,
