@@ -1,5 +1,5 @@
-use std::{fmt::Display, str::FromStr};
 use crate::Error;
+use std::{fmt::Display, str::FromStr};
 
 // #[derive(PartialEq, Debug)]
 // pub enum CreationError {
@@ -16,7 +16,7 @@ use crate::Error;
 //     }
 // }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Eq)]
 pub struct ChunkType {
     bytes: [u8; 4],
 }
@@ -89,6 +89,12 @@ impl Display for ChunkType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = std::str::from_utf8(&self.bytes);
         write!(f, "{}", str.expect("String not in the expected format"))
+    }
+}
+
+impl PartialEq for ChunkType {
+    fn eq(&self, other: &Self) -> bool {
+        self.bytes() == other.bytes()
     }
 }
 
