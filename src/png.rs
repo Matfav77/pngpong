@@ -14,26 +14,32 @@ struct PngFile {
 impl PngFile {
     const STANDARD_HEADER = [137, 80, 78, 71, 13, 10, 26, 10]; 
 
-    fn from_chunks (chunks: Vec<Chunk>) -> Self {
+    pub fn from_chunks (chunks: Vec<Chunk>) -> Self {
         Self { header: Self::STANDARD_HEADER, chunks}
     }
 
-    fn append_chunk(&mut self, chunk: Chunk) {
+    pub fn append_chunk(&mut self, chunk: Chunk) {
         self.chunks.push(chunk);
     }
 
-    fn remove_first_chunk (&mut self, chunk_type: ChunkType) -> Result<Chunk, Error> {
-        // todo
+    pub fn remove_first_chunk (&mut self, chunk_type: ChunkType) -> Result<Chunk, Error> {
     }
 
-    fn header (&self) -> &[u8;8] {
+    pub fn header (&self) -> &[u8;8] {
         &self.header
     }
 
-    fn chunks (&self) -> &[Chunk] {
+    pub fn chunks (&self) -> &[Chunk] {
         &self.chunks
     }
 
+    pub fn chunk_by_type (&self, chunk_type: &str) -> Option<&Chunk> {
+
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+         self.header.iter().copied().chain(self.chunks.iter().flat_map(|c| c.as_bytes())).collect()
+    }
 
 }
 
