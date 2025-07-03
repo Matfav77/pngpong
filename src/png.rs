@@ -34,7 +34,10 @@ impl PngFile {
     }
 
     pub fn chunk_by_type (&self, chunk_type: &str) -> Option<&Chunk> {
-
+        match ChunkType::from_str(chunk_type) {
+            Ok(c_type) => self.chunks.iter().find(|c| c.chunk_type().bytes() == c_type.bytes()),
+            Err(_e) => None
+        }
     }
 
     pub fn as_bytes(&self) -> Vec<u8> {
