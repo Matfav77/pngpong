@@ -6,12 +6,12 @@ use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
 
 #[derive(Debug)]
-struct PngFile {
+struct Png {
     header: [u8; 8],
     chunks: Vec<Chunk>,
 }
 
-impl PngFile {
+impl Png {
     const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
     pub fn from_chunks(chunks: Vec<Chunk>) -> Self {
@@ -63,7 +63,7 @@ impl PngFile {
     }
 }
 
-impl Display for PngFile {
+impl Display for Png {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#?}", self.chunks)
     }
@@ -91,7 +91,7 @@ mod tests {
         Png::from_chunks(chunks)
     }
 
-    fn chunk_from_strings(chunk_type: &str, data: &str) -> Result<Chunk> {
+    fn chunk_from_strings(chunk_type: &str, data: &str) -> Result<Chunk, Error> {
         use std::str::FromStr;
 
         let chunk_type = ChunkType::from_str(chunk_type)?;
