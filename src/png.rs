@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::str::{FromStr};
 
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
@@ -12,7 +13,7 @@ struct PngFile {
 }
 
 impl PngFile {
-    const STANDARD_HEADER = [137, 80, 78, 71, 13, 10, 26, 10]; 
+    const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10]; 
 
     pub fn from_chunks (chunks: Vec<Chunk>) -> Self {
         Self { header: Self::STANDARD_HEADER, chunks}
@@ -52,10 +53,9 @@ impl Display for PngFile {
     }
 }
 
-#![allow(unused_variables)]
-fn main() {
 #[cfg(test)]
 mod tests {
+#![allow(unused_variables)]
     use super::*;
     use crate::chunk_type::ChunkType;
     use crate::chunk::Chunk;
@@ -463,6 +463,5 @@ mod tests {
         202, 28, 31, 66, 176, 235, 16, 0, 0, 0, 3, 82, 117, 83, 116, 104, 101, 121, 158, 176, 245,
         160, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
     ];
-}
 }
 
