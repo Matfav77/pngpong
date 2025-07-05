@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::io::{BufReader, Read};
 use std::str::FromStr;
 
 use crate::Error;
@@ -66,6 +67,36 @@ impl Png {
 impl Display for Png {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#?}", self.chunks)
+    }
+}
+
+impl TryFrom<&[u8]> for Png {
+    type Error = Error;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let mut reader = BufReader::new(value);
+        let mut header: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
+        let mut length_buf: [u8; 4] = [0, 0, 0, 0];
+        let mut chunks: Vec<Chunk> = Vec::new();
+        reader.read_exact(&mut header)?;
+
+        if header != Self::STANDARD_HEADER {
+            return Err("Header of file is incorrect".into());
+        }
+
+        while let Ok(()) = reader.read_exact(&mut length_buf) {
+            let length = u32::from_be_bytes(length_buf);
+            let chunk_length = length + 8;
+
+            let mut chunk_buf: Vec<u8> = vec![0; chunk_length as usize];
+            reader.read_exact(&mut chunk_buf)?;
+            let chunk_b: Vec<u8> = length_buf.iter().copied().chain(chunk_buf.into_iter()).collect();
+            let chunk = Chunk::try_from(&chunk_b[..])?;
+
+            chunks.push(chunk);
+        }
+
+        Ok(Self { header, chunks })
     }
 }
 
