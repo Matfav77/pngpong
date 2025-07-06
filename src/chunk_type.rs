@@ -1,20 +1,22 @@
 use crate::Error;
-use std::{fmt::Display, str::FromStr};
+use std::{error::Error as ErrorTrait, fmt::Display, str::FromStr};
 
-// #[derive(PartialEq, Debug)]
-// pub enum CreationError {
-//     InvalidByte,
-//     InvalidStrLength,
-// }
-//
-// impl Display for CreationError {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match *self {
-//             Self::InvalidByte => write!(f, "provided byte is not in the correct range"),
-//             Self::InvalidStrLength => write!(f, "string needs to be of length 4"),
-//         }
-//     }
-// }
+#[derive(PartialEq, Debug)]
+pub enum CreationError {
+    InvalidByte,
+    InvalidStrLength,
+}
+
+impl Display for CreationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Self::InvalidByte => write!(f, "provided byte is not in the correct range"),
+            Self::InvalidStrLength => write!(f, "string needs to be of length 4"),
+        }
+    }
+}
+
+impl ErrorTrait for CreationError {}
 
 #[derive(Debug, Eq)]
 pub struct ChunkType {
@@ -65,7 +67,7 @@ impl TryFrom<[u8; 4]> for ChunkType {
     fn try_from(bytes: [u8; 4]) -> Result<Self, Error> {
         for b in bytes {
             if !Self::is_valid_png_byte(b) {
-                return Err("The byte provided is not in the expected range".into());
+                return Err(Box::new(CreationError::InvalidByte));
             }
         }
         Ok(ChunkType { bytes })
@@ -80,7 +82,7 @@ impl FromStr for ChunkType {
         if bytes.len() == 4 && bytes.is_ascii() {
             return Ok(Self::try_from([bytes[0], bytes[1], bytes[2], bytes[3]])?);
         } else {
-            return Err("Could not create a ChunkType chunk from the string provided".into());
+            return Err(Box::new(CreationError::InvalidStrLength));
         }
     }
 }
