@@ -9,6 +9,6 @@ mod png;
 pub type Error = Box<dyn std::error::Error>;
 
 fn main() -> Result<(), Error> {
-    parse_cli();
+    parse_cli()?;
     Ok(())
 }
