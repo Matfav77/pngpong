@@ -2,6 +2,11 @@ use std::{ffi::OsString, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 
+use crate::{
+    Error,
+    commands::{decode, encode, print, remove},
+};
+
 #[derive(Debug, Parser)]
 #[command(name = "pngpong")]
 #[command(about = "CLI commands to hide and retrieve messages in PNG files", long_about = None)]
@@ -11,7 +16,7 @@ struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
-enum Commands {
+pub enum Commands {
     /// Encodes a message inside a PGN file
     #[command(arg_required_else_help = true)]
     Encode {
@@ -22,7 +27,7 @@ enum Commands {
         #[arg(required = true)]
         message: String,
         #[arg(value_name = "OUTPUT")]
-        output_path: Option<OsString>,
+        output_path: Option<PathBuf>,
     },
     /// Decodes message hidden in PGN file
     Decode {
@@ -47,7 +52,7 @@ enum Commands {
     },
 }
 
-pub fn parse_cli() {
+pub fn parse_cli() -> Result<(), Error> {
     let args = Cli::parse();
 
     match args.command {
@@ -56,23 +61,15 @@ pub fn parse_cli() {
             chunk_type,
             message,
             output_path,
-        } => {
-            // TODO: implement this
-        }
+        } => encode(file_path, &chunk_type, &message, output_path),
         Commands::Decode {
             file_path,
             chunk_type,
-        } => {
-            // TODO: implement this
-        }
+        } => decode(file_path, &chunk_type),
         Commands::Remove {
             file_path,
             chunk_type,
-        } => {
-            // TODO: implement this
-        }
-        Commands::Print { file_path } => {
-            // TODO: implement this
-        }
+        } => remove(file_path, &chunk_type),
+        Commands::Print { file_path } => print(file_path),
     }
 }

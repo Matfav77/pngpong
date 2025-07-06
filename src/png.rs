@@ -7,7 +7,7 @@ use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
 
 #[derive(Debug)]
-struct Png {
+pub struct Png {
     header: [u8; 8],
     chunks: Vec<Chunk>,
 }
