@@ -1,11 +1,9 @@
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
+use anyhow::{Result};
 use clap::{Parser, Subcommand};
 
-use crate::{
-    Error,
-    commands::{decode, encode, print, remove},
-};
+use crate::commands::{decode, encode, print, remove};
 
 #[derive(Debug, Parser)]
 #[command(name = "pngpong")]
@@ -52,7 +50,7 @@ pub enum Commands {
     },
 }
 
-pub fn parse_cli() -> Result<(), Error> {
+pub fn parse_cli() -> Result<()> {
     let args = Cli::parse();
 
     match args.command {

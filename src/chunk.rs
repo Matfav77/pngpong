@@ -1,8 +1,8 @@
+use anyhow::{Error, Result, anyhow};
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 use std::str;
 
-use crate::Error;
 use crate::chunk_type::ChunkType;
 use crc::crc32;
 
@@ -41,7 +41,7 @@ impl Chunk {
         self.crc
     }
 
-    pub fn data_as_string(&self) -> Result<String, Error> {
+    pub fn data_as_string(&self) -> Result<String> {
         let parsed = str::from_utf8(&self.data)?;
         Ok(parsed.to_string())
     }
@@ -79,11 +79,11 @@ impl Display for Chunk {
 }
 
 impl TryFrom<&[u8]> for Chunk {
-    type Error = crate::Error;
+    type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() < 8 {
-            return Err("The array provided does not have enough data".into());
+            return Err(anyhow!("The array provided does not have enough data"));
         }
         let mut reader = BufReader::new(value);
         let mut buffer: [u8; 4] = [0, 0, 0, 0];
@@ -102,7 +102,9 @@ impl TryFrom<&[u8]> for Chunk {
 
         let computed_crc = Chunk::calculate_crc(&chunk_type, &data);
         if crc != computed_crc {
-            return Err("The CRC provided is not correct in relation to the other chunks".into());
+            return Err(anyhow!(
+                "The CRC provided is not correct in relation to the other chunks"
+            ));
         }
 
         Ok(Self {

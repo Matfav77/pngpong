@@ -1,8 +1,8 @@
+use anyhow::{Error, Result, anyhow};
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 use std::str::FromStr;
 
-use crate::Error;
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
 
@@ -26,14 +26,14 @@ impl Png {
         self.chunks.push(chunk);
     }
 
-    pub fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, Error> {
+    pub fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk> {
         match self
             .chunks
             .iter()
             .position(|c| *c.chunk_type() == ChunkType::from_str(chunk_type).unwrap())
         {
             Some(n) => Ok(self.chunks.remove(n)),
-            None => Err("Could not find specified chunk".into()),
+            None => Err(anyhow!("Could not find specified chunk")),
         }
     }
 
@@ -73,7 +73,7 @@ impl Display for Png {
 impl TryFrom<&[u8]> for Png {
     type Error = Error;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(value: &[u8]) -> Result<Self> {
         let mut reader = BufReader::new(value);
         let mut header: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
         let mut length_buf: [u8; 4] = [0, 0, 0, 0];
@@ -81,7 +81,7 @@ impl TryFrom<&[u8]> for Png {
         reader.read_exact(&mut header)?;
 
         if header != Self::STANDARD_HEADER {
-            return Err("Header of file is incorrect".into());
+            return Err(anyhow!("Header of file is not in the standard format"));
         }
 
         while let Ok(()) = reader.read_exact(&mut length_buf) {
@@ -90,7 +90,11 @@ impl TryFrom<&[u8]> for Png {
 
             let mut chunk_buf: Vec<u8> = vec![0; chunk_length as usize];
             reader.read_exact(&mut chunk_buf)?;
-            let chunk_b: Vec<u8> = length_buf.iter().copied().chain(chunk_buf.into_iter()).collect();
+            let chunk_b: Vec<u8> = length_buf
+                .iter()
+                .copied()
+                .chain(chunk_buf.into_iter())
+                .collect();
             let chunk = Chunk::try_from(&chunk_b[..])?;
 
             chunks.push(chunk);

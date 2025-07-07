@@ -4,15 +4,17 @@ use std::{
     str::FromStr,
 };
 
+use anyhow::{Result, anyhow};
+
 use crate::png::Png;
-use crate::{Error, chunk::Chunk, chunk_type::ChunkType};
+use crate::{chunk::Chunk, chunk_type::ChunkType};
 
 pub fn encode(
     path: PathBuf,
     chunk_type: &str,
     message: &str,
     output_path: Option<PathBuf>,
-) -> Result<(), Error> {
+) -> Result<()> {
     let data: Vec<u8> = fs::read(&path)?;
     let mut png = Png::try_from(&data[..])?;
     let chunk_type = ChunkType::from_str(chunk_type)?;
@@ -25,19 +27,19 @@ pub fn encode(
     Ok(())
 }
 
-pub fn decode(path: PathBuf, chunk_type: &str) -> Result<(), Error> {
+pub fn decode(path: PathBuf, chunk_type: &str) -> Result<()> {
     let data: Vec<u8> = fs::read(path)?;
     let png = Png::try_from(&data[..])?;
     if let Some(chunk) = png.chunk_by_type(chunk_type) {
         let string = chunk.data_as_string()?;
         println!("{string}");
     } else {
-        return Err("no chunk of the specified type found".into());
+        return Err(anyhow!("no chunk of the specified type found"));
     }
     Ok(())
 }
 
-pub fn remove(path: PathBuf, chunk_type: &str) -> Result<(), Error> {
+pub fn remove(path: PathBuf, chunk_type: &str) -> Result<()> {
     let data: Vec<u8> = fs::read(&path)?;
     let mut png = Png::try_from(&data[..])?;
     png.remove_first_chunk(chunk_type)?;
@@ -45,7 +47,7 @@ pub fn remove(path: PathBuf, chunk_type: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn print(path: PathBuf) -> Result<(), Error> {
+pub fn print(path: PathBuf) -> Result<()> {
     let data: Vec<u8> = fs::read(path)?;
     let png = Png::try_from(&data[..])?;
     println!("{png}");
